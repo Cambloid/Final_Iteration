@@ -21,6 +21,7 @@ int CALLBACK WinMain(
 	_In_ int       nCmdShow
 ) {
 
+
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit())
 		return 1;
@@ -35,10 +36,16 @@ int CALLBACK WinMain(
 		return 1;
 	}
 
+
+	VulkanImpl impl;
+	
+
 	// Main loop
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+
+
 	}
 
 	glfwTerminate();
