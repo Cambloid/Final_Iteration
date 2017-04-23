@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <iostream>
 
+
 #define IMGUI_MAX_POSSIBLE_BACK_BUFFERS 16
 #define IMGUI_VK_QUEUED_FRAMES 2
 
@@ -19,8 +20,6 @@ private:
 	//Framebuffersize -> Default settings
 	uint32_t width = 1280;
 	uint32_t height = 720;
-
-
 
 	//Vulkan Properties
 	VkInstance vkInstance = VK_NULL_HANDLE;

@@ -12,6 +12,8 @@
 
 #include "VulkanImpl.h"
 
+#include <QtWidgets>
+
 VulkanImpl impl;
 
 static void error_callback(int error, const char* description)
@@ -38,13 +40,16 @@ int CALLBACK WinMain(
 	int w = 1280;
 	int h = 720;
 
+	QMainWindow qwindow;
+	qwindow.show();
+	
+
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	GLFWwindow* window = glfwCreateWindow(w, h, "Final Iteration", NULL, NULL);
 
 
 	//Init Vulkan
 	impl.Init(window, w, h);
-
 
 	glfwSetFramebufferSizeCallback(window, resizeFrameBuffer);
 
