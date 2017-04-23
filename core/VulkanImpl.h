@@ -1,6 +1,8 @@
 #pragma once
 
+#define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan\vulkan.h>
+
 #include <GLFW\glfw3.h>
 #include <cstdlib>
 #include <cstdio>
@@ -14,8 +16,7 @@ class VulkanImpl
 {
 private: 
 	//Properties
-
-	GLFWwindow* window;
+	HWND hWindow;
 
 	//Framebuffersize -> Default settings
 	uint32_t width = 1280;
@@ -60,7 +61,7 @@ public:  // Konstruktor/Destruktor
 
 public: // Public Methoden
 	void ResizeFramebuffer(int width, int height);
-	void Init(GLFWwindow* window, int width, int height);
+	void Init(HWND hWindow, int width, int height);
 
 private: // Private Methoden
 	

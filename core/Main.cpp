@@ -25,48 +25,29 @@ void resizeFrameBuffer(GLFWwindow *window, int width, int heigth) {
 	impl.ResizeFramebuffer(width, heigth);
 }
 
-
+/*
 int CALLBACK WinMain(
-	_In_ HINSTANCE hInstance,
-	_In_ HINSTANCE hPrevInstance,
-	_In_ LPSTR     lpCmdLine,
-	_In_ int       nCmdShow
-) {
+_In_ HINSTANCE hInstance,
+_In_ HINSTANCE hPrevInstance,
+_In_ LPSTR     lpCmdLine,
+_In_ int       nCmdShow
+)
+*/
 
-	glfwSetErrorCallback(error_callback);
+int main(int argc, char *argv[]) 
+{
+	QApplication app(argc, argv);
 
-	if (!glfwInit()) return 1;
-
-	int w = 1280;
-	int h = 720;
-
-	QMainWindow qwindow;
-	qwindow.show();
+	QWindow qWindow;
 	
 
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	GLFWwindow* window = glfwCreateWindow(w, h, "Final Iteration", NULL, NULL);
+	qWindow.resize(1280, 720);
+	qWindow.show();
+	//qWindow.setWindowTitle(QApplication::translate("toplevel", "Top-level widget"));
 
 
 	//Init Vulkan
-	impl.Init(window, w, h);
-
-	glfwSetFramebufferSizeCallback(window, resizeFrameBuffer);
-
-	// Setup Vulkan
-	if (!glfwVulkanSupported())
-	{
-		//printf("GLFW: Vulkan Not Supported\n");
-		return 1;
-	}
-
-	// Main loop
-	while (!glfwWindowShouldClose(window))
-	{
-		glfwPollEvents();
-	}
-
-	glfwTerminate();
-
-	return 0;
+	impl.Init(reinterpret_cast<HWND>(qWindow.winId()), 1280, 720);
+	
+	return app.exec();
 }

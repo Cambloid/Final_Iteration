@@ -31,11 +31,21 @@ void VulkanImpl::initVulkan()
 		);
 	}
 
-	// Create Window Surface
+	// Create Window Surface -> with HWND (Windows Specific)
 	{
+		VkWin32SurfaceCreateInfoKHR createInfo;
+		createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+		createInfo.hwnd = this->hWindow;
+		createInfo.hinstance = GetModuleHandle(nullptr);
+
 		check_vk_result(
-			glfwCreateWindowSurface(this->vkInstance, this->window, this->vkAllocationCallbacks, &this->vkSurfaceKHR)
+			vkCreateWin32SurfaceKHR(this->vkInstance,
+				&createInfo,
+				this->vkAllocationCallbacks,
+				&this->vkSurfaceKHR
+			)
 		);
+
 	}
 
 	// Get GPU (WARNING here we assume the first gpu is one we can use)
@@ -428,11 +438,11 @@ void VulkanImpl::ResizeFramebuffer(int width, int height)
 
 }
 
-void VulkanImpl::Init(GLFWwindow* window,  int width, int height)
+void VulkanImpl::Init(HWND hWindow, int width, int height)
 {
 	this->width = width;
 	this->height = height;
-	this->window = window;
+	this->hWindow = hWindow;
 
 	this->initVulkan();
 }
