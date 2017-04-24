@@ -9,11 +9,10 @@ VulkanImpl::~VulkanImpl()
 // Private Methoden
 void VulkanImpl::initVulkan()
 {
-
 	// Create Vulkan Instance
 	{
-		uint32_t glfw_extensions_count;
-		const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extensions_count);
+		std::vector<const char*> instanceExtensions = { VK_KHR_SURFACE_EXTENSION_NAME };
+		instanceExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 
 		VkInstanceCreateInfo vkInstanceCreateInfo = {};
 		vkInstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -23,8 +22,8 @@ void VulkanImpl::initVulkan()
 		* 0. VK_KHR_surface
 		* 1. VK_KHR_win32_surface
 		*/
-		vkInstanceCreateInfo.enabledExtensionCount = glfw_extensions_count;
-		vkInstanceCreateInfo.ppEnabledExtensionNames = glfw_extensions;
+		vkInstanceCreateInfo.enabledExtensionCount = (uint32_t)instanceExtensions.size();
+		vkInstanceCreateInfo.ppEnabledExtensionNames = instanceExtensions.data();
 
 		check_vk_result(
 			vkCreateInstance(&vkInstanceCreateInfo, this->vkAllocationCallbacks, &this->vkInstance)
@@ -45,7 +44,6 @@ void VulkanImpl::initVulkan()
 				&this->vkSurfaceKHR
 			)
 		);
-
 	}
 
 	// Get GPU (WARNING here we assume the first gpu is one we can use)

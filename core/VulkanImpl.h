@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include <vector>
 
 
 #define IMGUI_MAX_POSSIBLE_BACK_BUFFERS 16
@@ -67,7 +68,6 @@ private: // Private Methoden
 	
 	void initVulkan();
 	void destroyVulkan();
-
 	void check_vk_result(VkResult err);
 
 };
