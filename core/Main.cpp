@@ -6,18 +6,12 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan\vulkan.h>
 
-#define GLFW_INCLUDE_NONE
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
 #include "VulkanImpl.h"
 
 #include <QtWidgets>
 
-
 int main(int argc, char *argv[]) 
 {
-
 	QApplication app(argc, argv);
 
 	QWindow qWindow;

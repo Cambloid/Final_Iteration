@@ -9,6 +9,7 @@ VulkanImpl::~VulkanImpl()
 // Private Methoden
 void VulkanImpl::initVulkan()
 {
+
 	// Create Vulkan Instance
 	{
 		std::vector<const char*> instanceExtensions = { VK_KHR_SURFACE_EXTENSION_NAME };
@@ -30,22 +31,6 @@ void VulkanImpl::initVulkan()
 		);
 	}
 
-	// Create Window Surface -> with HWND (Windows Specific)
-	{
-		VkWin32SurfaceCreateInfoKHR createInfo;
-		createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-		createInfo.hwnd = this->hWindow;
-		createInfo.hinstance = GetModuleHandle(nullptr);
-
-		check_vk_result(
-			vkCreateWin32SurfaceKHR(this->vkInstance,
-				&createInfo,
-				this->vkAllocationCallbacks,
-				&this->vkSurfaceKHR
-			)
-		);
-	}
-
 	// Get GPU (WARNING here we assume the first gpu is one we can use)
 	{
 		uint32_t count;
@@ -54,7 +39,7 @@ void VulkanImpl::initVulkan()
 		);
 		
 		VkPhysicalDeviceProperties vkPhysicalDeviceProperties;
-		for (int i = 0; i < count; i++) {
+		for (uint32_t i = 0; i < count; i++) {
 			check_vk_result(
 				vkEnumeratePhysicalDevices(vkInstance, &count, &this->vkPhysicalDevice)
 			);
@@ -74,7 +59,7 @@ void VulkanImpl::initVulkan()
 		);
 	}
 
-	// Get graphic queue
+	// Get graphic queue -> Get idx to graphics queue
 	{
 		uint32_t count;
 		vkGetPhysicalDeviceQueueFamilyProperties(this->vkPhysicalDevice, &count, VK_NULL_HANDLE);
@@ -92,44 +77,6 @@ void VulkanImpl::initVulkan()
 		}
 
 		free(queues);
-	}
-
-	// Check for WSI support
-	{
-		VkBool32 res;
-		vkGetPhysicalDeviceSurfaceSupportKHR(this->vkPhysicalDevice, this->queueFamilyIdx, this->vkSurfaceKHR, &res);
-		if (res != VK_TRUE)
-		{
-			fprintf(stderr, "Error no WSI support on physical device 0\n");
-			exit(-1);
-		}
-	}
-
-	// Get Surface Format
-	{
-		VkFormat image_view_format[][2] = {
-			{ VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_UNORM },
-			{ VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM }
-		};
-
-		uint32_t count;
-		vkGetPhysicalDeviceSurfaceFormatsKHR(this->vkPhysicalDevice, this->vkSurfaceKHR, &count, NULL);
-		VkSurfaceFormatKHR *formats = (VkSurfaceFormatKHR*)malloc(sizeof(VkSurfaceFormatKHR) * count);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(this->vkPhysicalDevice, this->vkSurfaceKHR, &count, formats);
-		
-		for (size_t i = 0; i < sizeof(image_view_format) / sizeof(image_view_format[0]); i++)
-		{
-			for (uint32_t j = 0; j < count; j++)
-			{
-				if (formats[j].format == image_view_format[i][0])
-				{
-					this->vkImageFormat = image_view_format[i][0];
-					this->vkViewFormat  = image_view_format[i][1];
-					this->vkColorSpace  = formats[j].colorSpace;
-				}
-			}
-		}
-		free(formats);
 	}
 
 	// Create Logical Device
@@ -160,16 +107,71 @@ void VulkanImpl::initVulkan()
 		vkGetDeviceQueue(this->vkDevice, this->queueFamilyIdx, queue_index, &this->vkQueue);
 	}
 
-	// Create Framebuffers
+	// Create Window Surface -> with HWND (Windows Specific)
+	{
+		VkWin32SurfaceCreateInfoKHR createInfo;
+		createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+		createInfo.hwnd = this->hWindow;
+		createInfo.hinstance = GetModuleHandle(nullptr);
+
+		check_vk_result(
+			vkCreateWin32SurfaceKHR(this->vkInstance,
+				&createInfo,
+				this->vkAllocationCallbacks,
+				&this->vkSurfaceKHR
+			)
+		);
+	}
+
+	// Check for WSI support
+	{
+		VkBool32 res;
+		vkGetPhysicalDeviceSurfaceSupportKHR(this->vkPhysicalDevice, this->queueFamilyIdx, this->vkSurfaceKHR, &res);
+		if (res != VK_TRUE)
+		{
+			fprintf(stderr, "Error no WSI support on physical device 0\n");
+			exit(-1);
+		}
+	}
+
+	// Get Surface Format
+	{
+		VkFormat image_view_format[][2] = {
+			{ VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_UNORM },
+			{ VK_FORMAT_B8G8R8A8_SRGB,  VK_FORMAT_B8G8R8A8_UNORM }
+		};
+
+		uint32_t count;
+		vkGetPhysicalDeviceSurfaceFormatsKHR(this->vkPhysicalDevice, this->vkSurfaceKHR, &count, VK_NULL_HANDLE); // Get Count
+
+		VkSurfaceFormatKHR *formats = (VkSurfaceFormatKHR*)malloc(sizeof(VkSurfaceFormatKHR) * count);
+
+		vkGetPhysicalDeviceSurfaceFormatsKHR(this->vkPhysicalDevice, this->vkSurfaceKHR, &count, formats); //Fill Data
+
+		for (size_t i = 0; i < sizeof(image_view_format) / sizeof(image_view_format[0]); i++)
+		{
+			for (uint32_t j = 0; j < count; j++)
+			{
+				/*
+				Select
+				vkImageFormat: VK_FORMAT_B8G8R8A8_SRGB
+				vkViewFormat:  VK_FORMAT_B8G8R8A8_UNORM
+				vkColorSpace:  VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+				*/
+				if (formats[j].format == image_view_format[i][0])
+				{
+					this->vkImageFormat = image_view_format[i][0];
+					this->vkViewFormat = image_view_format[i][1];
+					this->vkColorSpace = formats[j].colorSpace;
+				}
+			} 
+		}
+		free(formats);
+	}
+
+	// Create Swapchain/Framebuffers
 	{
 		this->ResizeFramebuffer(this->width, this->height);
-
-		//glfwGetFramebufferSize(this->glfwWindow, &w, &h);
-		//resizeFramebuffer(this->glfwWindow, w, h);
-
-
-		//glfwSetFramebufferSizeCallback(this->glfwWindow, fun);
-
 	}
 
 	// Create Command Buffers
@@ -245,6 +247,70 @@ void VulkanImpl::initVulkan()
 		
 	}
 
+	// Create graphics Pipeline
+	{
+
+		// Vertex Shader
+		std::vector<char> vertShaderCode = this->loadShader("shaders/vert.spv");
+		
+		VkShaderModuleCreateInfo vertCreateInfo = {};
+		vertCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		vertCreateInfo.codeSize = vertShaderCode.size();
+		std::vector<uint32_t> vertCodeAligned(vertShaderCode.size() / 4 + 1);
+		memcpy(vertCodeAligned.data(), vertShaderCode.data(), vertShaderCode.size());
+		vertCreateInfo.pCode = vertCodeAligned.data();
+
+		VkShaderModule vertShaderModule;
+		vkCreateShaderModule(this->vkDevice, &vertCreateInfo, this->vkAllocationCallbacks, &vertShaderModule);
+
+		VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
+		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vertShaderStageInfo.module = vertShaderModule;
+		vertShaderStageInfo.pName = "main";
+
+
+
+		// Fragment Shader
+		std::vector<char> fragShaderCode = this->loadShader("shaders/frag.spv");
+
+		VkShaderModuleCreateInfo fragCreateInfo = {};
+		fragCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		fragCreateInfo.codeSize = fragShaderCode.size();
+		std::vector<uint32_t> fragCodeAligned(fragShaderCode.size() / 4 + 1);
+		memcpy(fragCodeAligned.data(), fragShaderCode.data(), fragShaderCode.size());
+		fragCreateInfo.pCode = fragCodeAligned.data();
+
+		VkShaderModule fragShaderModule;
+		vkCreateShaderModule(this->vkDevice, &fragCreateInfo, this->vkAllocationCallbacks, &fragShaderModule);
+
+		VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
+		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		fragShaderStageInfo.module = fragShaderModule;
+		fragShaderStageInfo.pName = "main";
+
+
+
+		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+
+
+	}
+}
+
+std::vector<char> VulkanImpl::loadShader(const std::string& filename)
+{
+	std::ifstream file(filename, std::ios::ate | std::ios::binary);
+	
+	size_t fileSize = (size_t)file.tellg();
+	std::vector<char> buffer(fileSize);
+	
+	file.seekg(0);
+	file.read(buffer.data(), fileSize);
+
+	file.close();
+
+	return buffer;
 }
 
 void VulkanImpl::destroyVulkan()
@@ -279,6 +345,8 @@ void VulkanImpl::check_vk_result(VkResult err)
 	if (err < 0)
 		abort();
 }
+
+
 
 //Public Methoden
 void VulkanImpl::ResizeFramebuffer(int width, int height)
@@ -349,7 +417,7 @@ void VulkanImpl::ResizeFramebuffer(int width, int height)
 		);
 
 		check_vk_result(
-			vkGetSwapchainImagesKHR(this->vkDevice, this->vkSwapchain, &this->vkBackBufferCount, NULL)
+			vkGetSwapchainImagesKHR(this->vkDevice, this->vkSwapchain, &this->vkBackBufferCount, VK_NULL_HANDLE)
 		);
 
 		check_vk_result(
@@ -357,7 +425,8 @@ void VulkanImpl::ResizeFramebuffer(int width, int height)
 		);
 
 	}
-	if (old_swapchain)
+	
+	 if (old_swapchain)
 		vkDestroySwapchainKHR(this->vkDevice, old_swapchain, this->vkAllocationCallbacks);
 
 	// Create the Render Pass:
@@ -387,9 +456,11 @@ void VulkanImpl::ResizeFramebuffer(int width, int height)
 		info.pAttachments = &attachment;
 		info.subpassCount = 1;
 		info.pSubpasses = &subpass;
+
 		check_vk_result(
 			vkCreateRenderPass(this->vkDevice, &info, this->vkAllocationCallbacks, &this->vkRenderPass)
 		);
+
 	}
 
 	// Create The Image Views
@@ -402,7 +473,22 @@ void VulkanImpl::ResizeFramebuffer(int width, int height)
 		info.components.g = VK_COMPONENT_SWIZZLE_G;
 		info.components.b = VK_COMPONENT_SWIZZLE_B;
 		info.components.a = VK_COMPONENT_SWIZZLE_A;
-		info.subresourceRange = this->vkImageRange;
+
+		/*
+		VkImageAspectFlags    aspectMask;
+		uint32_t              baseMipLevel;
+		uint32_t              levelCount;
+		uint32_t              baseArrayLayer;
+		uint32_t              layerCount;
+		{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
+		*/
+		info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		info.subresourceRange.baseMipLevel = 0;
+		info.subresourceRange.levelCount = 1;
+		info.subresourceRange.baseArrayLayer = 0;
+		info.subresourceRange.layerCount = 1;
+
+
 		for (uint32_t i = 0; i < this->vkBackBufferCount; i++)
 		{
 			info.image = this->vkBackBuffer[i];
@@ -415,6 +501,7 @@ void VulkanImpl::ResizeFramebuffer(int width, int height)
 	// Create Framebuffer:
 	{
 		VkImageView attachment[1];
+
 		VkFramebufferCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		info.renderPass = this->vkRenderPass;
@@ -431,6 +518,7 @@ void VulkanImpl::ResizeFramebuffer(int width, int height)
 				vkCreateFramebuffer(this->vkDevice, &info, this->vkAllocationCallbacks, &this->vkFramebuffer[i])
 			);
 		}
+
 	}
 
 
