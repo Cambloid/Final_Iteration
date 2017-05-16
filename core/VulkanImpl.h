@@ -1,5 +1,8 @@
 #pragma once
 
+// std::numeric_limits<uint64_t>::max
+#define NOMINMAX
+
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan\vulkan.h>
 
@@ -8,6 +11,8 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <limits>
+
 
 #define IMGUI_MAX_POSSIBLE_BACK_BUFFERS 16
 #define IMGUI_VK_QUEUED_FRAMES 2
@@ -46,13 +51,15 @@ private:
 	uint32_t vkFrameIndex = 0;
 	VkCommandPool vkCommandPool[IMGUI_VK_QUEUED_FRAMES];
 	VkCommandBuffer vkCommandBuffer[IMGUI_VK_QUEUED_FRAMES];
-	VkFence vkFence[IMGUI_VK_QUEUED_FRAMES];
-	VkSemaphore vkSemaphore[IMGUI_VK_QUEUED_FRAMES];
 
 	VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
+	VkSemaphore vkSemImageAvailable = VK_NULL_HANDLE;
+	VkSemaphore vkSemRenderFinished = VK_NULL_HANDLE;
 
 	VkSwapchainKHR vkSwapchain = VK_NULL_HANDLE;
 	VkRenderPass vkRenderPass  = VK_NULL_HANDLE;
+
+	VkPipeline vkPipeline = VK_NULL_HANDLE;
 
 
 public:  // Konstruktor/Destruktor
@@ -62,6 +69,7 @@ public:  // Konstruktor/Destruktor
 public: // Public Methoden
 	void ResizeFramebuffer(int width, int height);
 	void Init(HWND hWindow, int width, int height);
+	void DrawFrame();
 
 private: // Private Methoden
 	

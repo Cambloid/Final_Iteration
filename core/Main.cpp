@@ -23,6 +23,8 @@ int main(int argc, char *argv[])
 
 	//Init Vulkan
 	impl.Init(reinterpret_cast<HWND>(qWindow.winId()), 1280, 720);
-	
+	impl.DrawFrame();
+
+
 	return app.exec();
 }
