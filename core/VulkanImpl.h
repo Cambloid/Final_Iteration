@@ -13,10 +13,6 @@
 #include <fstream>
 #include <limits>
 
-
-#define IMGUI_MAX_POSSIBLE_BACK_BUFFERS 16
-#define IMGUI_VK_QUEUED_FRAMES 2
-
 class VulkanImpl
 {
 private: 
@@ -44,13 +40,18 @@ private:
 
 	uint32_t vkBackBufferIndex = 0;
 	uint32_t vkBackBufferCount = 0;
-	VkImage vkBackBuffer[IMGUI_MAX_POSSIBLE_BACK_BUFFERS] = {};
-	VkImageView vkBackBufferView[IMGUI_MAX_POSSIBLE_BACK_BUFFERS] = {};
-	VkFramebuffer vkFramebuffer[IMGUI_MAX_POSSIBLE_BACK_BUFFERS] = {};
 
-	uint32_t vkFrameIndex = 0;
-	VkCommandPool vkCommandPool[IMGUI_VK_QUEUED_FRAMES];
-	VkCommandBuffer vkCommandBuffer[IMGUI_VK_QUEUED_FRAMES];
+	std::vector<VkImage> vkBackBuffer;
+	//VkImage vkBackBuffer[IMGUI_MAX_POSSIBLE_BACK_BUFFERS] = {};
+	std::vector<VkImageView>  vkBackBufferView;
+	//VkImageView vkBackBufferView[IMGUI_MAX_POSSIBLE_BACK_BUFFERS] = {};
+	std::vector<VkFramebuffer> vkFramebuffer;
+	//VkFramebuffer vkFramebuffer[IMGUI_MAX_POSSIBLE_BACK_BUFFERS] = {};
+
+	std::vector<VkCommandPool> vkCommandPool;
+	//VkCommandPool vkCommandPool[IMGUI_VK_QUEUED_FRAMES];
+	std::vector<VkCommandBuffer> vkCommandBuffer;
+	//VkCommandBuffer vkCommandBuffer[IMGUI_VK_QUEUED_FRAMES];
 
 	VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
 	VkSemaphore vkSemImageAvailable = VK_NULL_HANDLE;

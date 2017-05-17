@@ -33,6 +33,7 @@ void VulkanImpl::initVulkan()
 
 	// Get GPU (WARNING here we assume the first gpu is one we can use)
 	{
+
 		uint32_t count;
 		this->check_vk_result(
 			vkEnumeratePhysicalDevices(this->vkInstance, &count, VK_NULL_HANDLE)
@@ -176,7 +177,7 @@ void VulkanImpl::initVulkan()
 
 	// Create Command Buffers
 	{
-		for (int i = 0; i < IMGUI_VK_QUEUED_FRAMES; i++)
+		for (int i = 0; i < this->vkBackBufferCount; i++)
 		{
 			{
 				VkCommandPoolCreateInfo info = {};
@@ -197,7 +198,7 @@ void VulkanImpl::initVulkan()
 				info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 				info.commandPool = this->vkCommandPool[i];
 				info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-				info.commandBufferCount = IMGUI_VK_QUEUED_FRAMES;
+				info.commandBufferCount = this->vkBackBufferCount;
 				
 				this->check_vk_result(
 					vkAllocateCommandBuffers(this->vkDevice, &info, &this->vkCommandBuffer[i])
@@ -259,8 +260,6 @@ void VulkanImpl::initVulkan()
 		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
 		vertShaderStageInfo.module = vertShaderModule;
 		vertShaderStageInfo.pName = "main";
-
-
 
 		// Fragment Shader
 		std::vector<char> fragShaderCode = this->loadShader("shaders/frag.spv");
@@ -465,7 +464,8 @@ void VulkanImpl::initVulkan()
 
 	// Record Command Buffers
 	{
-		for (size_t i = 0; i < IMGUI_VK_QUEUED_FRAMES; i++) {
+
+		for (size_t i = 0; i < this->vkBackBufferCount; i++) {
 			VkCommandBufferBeginInfo beginInfo = {};
 
 			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -532,9 +532,19 @@ std::vector<char> VulkanImpl::loadShader(const std::string& filename)
 
 void VulkanImpl::destroyVulkan()
 {
+	vkDestroySemaphore(this->vkDevice, this->vkSemRenderFinished, this->vkAllocationCallbacks);
+	vkDestroySemaphore(this->vkDevice, this->vkSemImageAvailable, this->vkAllocationCallbacks);
+	vkDestroyRenderPass(this->vkDevice, this->vkRenderPass, this->vkAllocationCallbacks);
+	//vkDestroyPipelineLayout(this->vkDevice, &pipelineLayout, this->vkAllocationCallbacks);
+	//vkCreateShaderModule(this->vkDevice, &fragCreateInfo, this->vkAllocationCallbacks, &fragShaderModule);
+	//vkCreateShaderModule(this->vkDevice, &vertCreateInfo, this->vkAllocationCallbacks, &vertShaderModule);
+	//vkCreateDescriptorPool(this->vkDevice, &pool_info, this->vkAllocationCallbacks, &this->vkDescriptorPool)
+	//vkAllocateCommandBuffers(this->vkDevice, &info, &this->vkCommandBuffer[i])
+	//vkCreateCommandPool(this->vkDevice, &info, this->vkAllocationCallbacks, &this->vkCommandPool[i])
+	
 	vkDestroyDescriptorPool(this->vkDevice, this->vkDescriptorPool, this->vkAllocationCallbacks);
 	
-	for (int i = 0; i < IMGUI_VK_QUEUED_FRAMES; i++)
+	for (int i = 0; i < this->vkBackBufferCount; i++)
 	{
 		vkFreeCommandBuffers(this->vkDevice, this->vkCommandPool[i], 1, &this->vkCommandBuffer[i]);
 		vkDestroyCommandPool(this->vkDevice, this->vkCommandPool[i], this->vkAllocationCallbacks);
@@ -635,8 +645,15 @@ void VulkanImpl::ResizeFramebuffer(int width, int height)
 			vkGetSwapchainImagesKHR(this->vkDevice, this->vkSwapchain, &this->vkBackBufferCount, VK_NULL_HANDLE)
 		);
 
+
+		this->vkBackBuffer.resize(this->vkBackBufferCount);
+		this->vkBackBufferView.resize(this->vkBackBufferCount);
+		this->vkFramebuffer.resize(this->vkBackBufferCount);
+		this->vkCommandPool.resize(this->vkBackBufferCount);
+		this->vkCommandBuffer.resize(this->vkBackBufferCount);
+
 		this->check_vk_result(
-			vkGetSwapchainImagesKHR(this->vkDevice, this->vkSwapchain, &this->vkBackBufferCount, this->vkBackBuffer)
+			vkGetSwapchainImagesKHR(this->vkDevice, this->vkSwapchain, &this->vkBackBufferCount, this->vkBackBuffer.data())
 		);
 
 	}
